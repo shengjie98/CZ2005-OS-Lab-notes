@@ -102,7 +102,7 @@ If two threads are modifying a shared `value`, the `value` must be wrapped caref
 
 # Exp4
 ## Overview and global variables
-In exp4, instead of running threads, a user process is ran. The entry point for `./nachos` is in `threads/main.cc` where the `StartProcess(exe)` (defined in `userprog/progtest.cc`) will start the process. As the process runs, it indexes memory in it's logical memory space, which has to be translated to physical memory space. Paging is used, with a machine level **Translation Look-aside Buffer (TLB)** and a **Inverted Page Table (IPT)**. The TLB replacement algorithm is **FIFO**. The IPT replacement algorithm is **LRU**
+In exp4, instead of running threads, a user process is ran. The entry point for `./nachos` is in `threads/main.cc` where the `StartProcess(exe)` (defined in `userprog/progtest.cc`) will start the process. As the process runs, it indexes memory in it's logical memory space, which has to be translated to physical memory space. Paging is used, with a machine level **Translation Look-aside Buffer (TLB)** and a **Inverted Page Table (IPT)**. The TLB replacement algorithm is **FIFO**. The IPT replacement algorithm is **LRU** If there is a TLB miss, the exception handler will run, then the translation will be attempted again. We keep track of the number of TLB misses, and the number of page faults in `stats`
 
 Somewhere along the line, other that the 6 global vairables from exp1-3, a few more global variables are declared: 
 * `machine->tlb` - the actual TLB, an array of `TranslationEntry` object, each notably having a `virtualPage` and `PhysicalPage`
@@ -134,10 +134,28 @@ Defined in `vm/tlb.cc`. In exp4, we assume that the VAddr is valid, ie within ra
 * note that `InsertToTLB()` is called regardless. Also, `stats->NumTlbMisses` is not incremented here, but rather in `InsertToTLB()`
 
 ## PageOutPageIn(int vpn)
-Defined in `vm/tlb.cc`. This is called when there is a page fault, meaning that the required memory is not loaded into any physical frames, and has to be loaded in from disk. 
+Defined in `vm/tlb.cc`. This is called when there is a page fault, meaning that the required memory is not loaded into any physical frames, and has to be loaded in from disk. The frame replaced is determined by the LRU algorithm
 * increment `stats->NumPageFaults`
 * `phyPage = lruAlgorithm()` - this gets the index/frame number for the vpn to replace. 
+* load the actual memory to the frame
+    * call `DoPageOut(phyPage)` - which pages out the frame is `memoryTable[phyPage].dirty` is `TRUE`. If we want to see if pages are paged out, we can do so here 
+    * call `DoPageIn(vpn, phyPage)`
 * load respective page into `memoryTable[phyPage]`. Set `memoryTable[phyPage].lastUsed = 0`, this will be updated to the correct value in `InsertToTLB`
 * return `phyPage`, which is then passed into `InsertToTLB`
 
-## 
+## InsertToTLB(int vpn, int phyPage)
+Defined in `vm/tlb.cc`. This is called for every TLB miss, and updates the TLB with the new information. The entry that is replaced is determined by FIFO. 
+* find empty TLB entry or check FIFOPointer to find victim
+* update entry with new information, and update `FIFOPointer = (i+1) % TLBSize`
+* increment `stats->NumTlbMusses`
+* update `memoryTable[phyPage].lastUsed = stats->totalTicks` and `memoryTable[phyPage].TLBEntry = i`
+
+## lruAlgorithm()
+The replacement algorithm for IPT. Intuitively, look through the `memoryTable` to find the invalid entry or entry with the lowest `lastUsed` value, and set as the `victim` to be returned. 
+
+## To get CSV answers
+For every TLB miss, we want to know what the IPT and TLB entry is being updated. The best place to do so is in `InsertInTLB(vpn, phyPage)`, since it will be called everytime a TLB miss happens. We can print the state of `machine->tlb, memoryTable` to get the values of the tables, and `phyPage` to get the updated IPT entry, and `FIFOPointer` to get the updated TLB entry. 
+
+If we want to get the data from only Page faults, we can do so in PageOutPageIn(). 
+
+To get the entries where pages are paged out, we can print `phyPage` in `DoPageOut(phyPage)` under the condition that `memoryTable[phyPage].dirty` is `TRUE`
