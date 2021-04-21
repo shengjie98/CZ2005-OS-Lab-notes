@@ -2,7 +2,7 @@
 
 ## Overview and global variables
 
-For every experiment in eg. `nachos/exp1` there is a `main.cc` which is the file that is run when you run `./nachos` from ternimal. In `main()`, the `Initialize()` which is found in `threads/system.cc` is called, which initalised ** SIX ** global variables, which can be accessed anywhere:
+For every experiment in eg. `nachos/exp1` there is a `main.cc` which is the file that is run when you run `./nachos` from ternimal. In `main()`, the `Initialize()` which is found in `threads/system.cc` is called, which initalised **SIX** global variables, which can be accessed anywhere:
 * `currentThread` - which is a pointer to the current "running" thread
 * `threadToBeDestroyed` - which will be set when a thread is finished (thread calls `Finish()`)
 * `scheduler` - a `Scheduler` object which is in charge of maintaining the ready queue
@@ -42,9 +42,9 @@ Located in `machine/Timer.cc`. Not the actual timer which counts down. Only job 
 
  Attributes and Methods:
 * `Timer(voidFnPointer handler, int arg, bool doRandom)` - constructor, called in `Initialize()`, calls `interrupt->Schedule(TimerHandler, this, TimeOfNextInterrupt(), TimerInt)`, which basically adds the first `PendingInterrupt` object. The `handler` is a by default `TimerInterruptHandler()` defined in `threads/system.cc`
-* TimerExpired() - starts the next timer by calling `interrupt->Schedule(TimerHandler, this, TimeOfNextInterrupt(), TimerINt)`, and then calls `handler` function with given `args`
+* `TimerExpired()` - starts the next timer by calling `interrupt->Schedule(TimerHandler, this, TimeOfNextInterrupt(), TimerINt)`, and then calls `handler` function with given `args`
 * `TimeOfNextInterrupt()` - returns a number, either random or fixed based on `doRandom` boolean flag. If fixed (and `handler` is `TimerInterruptHandler`), then the scheduler follows the round-robin schedulling algorithm.  This is because `TimerInterruptHandler` calls `currentThread->Yield()` meaning that the interrupts are pre-emptive.
-* TimerHandler(int *dummy) - a handler called in `CheckIfDue()` that calls `TimerExpired()` which then calls the actual `TimerInterruptHandler()` 
+* `TimerHandler(int *dummy)` - a handler called in `CheckIfDue()` that calls `TimerExpired()` which then calls the actual `TimerInterruptHandler()` 
 
 ## TimerInterruptHandler()
 Defined in `threads/system.cc`. Calls `interrupt->YieldOnReturn()` which sets the YieldOnReturn flag to be `TRUE` (HONESTLY NO FKING CLUE WHAT THIS IS FOR)
@@ -55,9 +55,9 @@ Defined in `machine/interrupt.cc`. Used in Timer class.
  Attributes and Methods:
 * `PendingInterrupts[] pending` - a `List` of `PendingInterrupts`, sorted in increasing order, such that the system only needs to check the start of the list to see if an interrupt is needed. 
 * `Interrupt()` - constructor to initialise empty `pending` list
-* 'Schedule(handler, arg, fromNow, type)' - also ** important**. Initialises a `PendingInterrupt` object with `PendingInterrupt(handler, arg, when, type)`. where `when =  stats->totalTicks + fromNow `. This object is inserted into `pending` based on `when`
+* `Schedule(handler, arg, fromNow, type)` - also **important**. Initialises a `PendingInterrupt` object with `PendingInterrupt(handler, arg, when, type)`. where `when =  stats->totalTicks + fromNow `. This object is inserted into `pending` based on `when`
 * `OneTick()` - increments the global variable `stats->totalTicks` and calls `CheckIfDue()`. If `YieldOnReturn` boolean flag is `TRUE`, then call `currentThread->Yield()` at the end.
-* 'CheckIfDue(boolean advanceClock)' - remove first `PendingInterrupt` and check it's when attribute. If not due, add it back to `pending` and return `FALSE`. If it is due, call the `TimerHandler()` in `Timer`, which in turn calls `TimerExpired()` and the actual `TimerInterruptHandler()`
+* `CheckIfDue(boolean advanceClock)` - remove first `PendingInterrupt` and check it's when attribute. If not due, add it back to `pending` and return `FALSE`. If it is due, call the `TimerHandler()` in `Timer`, which in turn calls `TimerExpired()` and the actual `TimerInterruptHandler()`
 * `YieldOnReturn()` - set `YieldOnReturn` boolean flag to be `TRUE`
  Other misc methods:
 * `Idle() `- to wait for the next thread to enter ready queue
