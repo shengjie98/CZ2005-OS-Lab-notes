@@ -49,6 +49,8 @@ Located in `machine/Timer.cc`. Not the actual timer which counts down. Only job 
 ## TimerInterruptHandler()
 Defined in `threads/system.cc`. Calls `interrupt->YieldOnReturn()` which sets the YieldOnReturn flag to be `TRUE` (HONESTLY NO FKING CLUE WHAT THIS IS FOR)
 
+**edit** this is so that the interrupt behaves as a non preemptive scheduler, and yields the thread after it is done
+
 ## Interrupt
 Defined in `machine/interrupt.cc`. Used in Timer class. 
 
